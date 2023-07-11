@@ -7,23 +7,6 @@ def letterSetsContain(inp, letterSets):
                 return True
     return False
 
-def getLettersManual():
-    sides = ["top", "right", "bottom", "left"]
-    
-    print("=== Insert the letters! ===")
-    
-    letterSets = []
-    for i in range(4):
-        while (True):
-            inp = input(f"Type the {sides[i]} side letters: ")
-            if len(inp) == 3 and len(set(inp)) == 3 and not letterSetsContain(inp, letterSets):
-                letterSets.append(inp)
-                break
-            else:
-                print("invalid input")
-
-    return letterSets
-
 def createNextPossibleLetterMap(letterSets):
     nextLetters = {}
     for i in range(len(letterSets)):
@@ -52,34 +35,6 @@ def findPossibleWords(letterSets):
             if validWord:
                 words[word[0]].append(word)
     return words
-
-def greedyAlgorithm(letterSets):
-    print("Using a greedy algorithm...")
-    wordsByLetter = findPossibleWords(letterSets)
-    allWords = [word for letterSet in [wordsByLetter[letter] for letter in wordsByLetter] for word in letterSet]
-    remainingLetters = set([letter for letterSet in letterSets for letter in letterSet])
-    solution = []
-    prevLetter = ""
-    while (remainingLetters):
-        bestWord = None
-        bestLetters = 0
-        for word in wordsByLetter[prevLetter] if prevLetter else allWords:
-            wordLetters = set()
-            for a in word:
-                if a in remainingLetters:
-                    wordLetters.add(a)
-            if len(wordLetters) > bestLetters:
-                bestLetters = len(wordLetters)
-                bestWord = word
-        solution.append(bestWord)
-        if bestWord == None:
-            return -1
-        prevLetter = bestWord[-1]
-        for a in bestWord:  # type: ignore
-            if a in remainingLetters:
-                remainingLetters.remove(a)
-
-    return [solution]
 
 def bruteForceAlgorithm(letterSets):
     print("Using a brute force algorithm...")
@@ -119,24 +74,13 @@ def displaySolutions(solutions):
         for i in range(len(seq)):
             print(f"{seq[i]}, ", end="") if i != len(seq)-1 else print(seq[i])
 
-def selectAlgorithm():
-    print("=== Select the type of algorithm to use ===")
-    options = [greedyAlgorithm, bruteForceAlgorithm]
-    print("1. Greedy\n2. Brute force")
-    try:
-        inp = int(input())
-        return options[inp-1]
-    except:
-        print("invalid input")
-        return -1
 
 if __name__ == "__main__":
-    letterSets = getLettersManual()
-    
-    algo = selectAlgorithm()
-    if algo != -1:
-        result = algo(letterSets)
-        if result != -1:    
-            displaySolutions(result)
-        else:
-            print("No solution found")
+    letterString = input("Enter all the letter sets as one long string: ")
+    # "aolrpiteckun" was the puzzle on Tuesday 07/11/2023
+    letterSets = [letterString[i:i+3] for i in range(0, len(letterString), 3)]
+    result = bruteForceAlgorithm(letterSets)
+    if result != -1:    
+        displaySolutions(result)
+    else:
+        print("No solution found")
