@@ -77,10 +77,16 @@ def displaySolutions(solutions):
 
 if __name__ == "__main__":
     letterString = input("Enter all the letter sets as one long string: ")
-    # "aolrpiteckun" was the puzzle on Tuesday 07/11/2023
     letterSets = [letterString[i:i+3] for i in range(0, len(letterString), 3)]
     result = bruteForceAlgorithm(letterSets)
     if result != -1:    
         displaySolutions(result)
     else:
         print("No solution found")
+
+
+# Enter all the letter sets as one long string: rudnmgfioapl
+# Using a brute force algorithm...
+# === 1 Solution Found! ===
+# 1: program, mindful
+
