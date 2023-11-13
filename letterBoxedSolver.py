@@ -1,92 +1,66 @@
 import itertools
 
-def letterSetsContain(inp, letterSets):
-    for a in inp:
-        for s in letterSets:
-            if a in s:
-                return True
-    return False
-
 def createNextPossibleLetterMap(letterSets):
-    nextLetters = {}
-    for i in range(len(letterSets)):
-        for a in letterSets[i]:
-            nextLetters[a] = []
-            for j in range(len(letterSets)):
-                if j != i:
-                    nextLetters[a] += letterSets[j]
+    """Create a map of each letter to letters in other sets."""
+    return {a: [b for j, s2 in enumerate(letterSets) if j != i for b in s2] 
+            for i, s in enumerate(letterSets) for a in s}
 
-    return nextLetters
+def isWordValid(word, letters, nextPossibilities):
+    """Check if a word is valid based on the rules."""
+    return word[0] in letters and all(word[i] in nextPossibilities[word[i-1]] for i in range(1, len(word)))
 
-def findPossibleWords(letterSets):
-    letters = [a for s in letterSets for a in s]
-    words = {a:[] for a in letters}
-    nextPossibilities = createNextPossibleLetterMap(letterSets)
-    with open("filtered_words.txt") as wordList:
-        for word in wordList:
-            word = word.strip()
-            if len(word) < 3 or word[0] not in letters:
-                continue
-            validWord = True
-            for i in range(1,len(word)):
-                if word[i] not in nextPossibilities[word[i-1]]:
-                    validWord = False
-                    break
-            if validWord:
-                words[word[0]].append(word)
-    return words
+def findPossibleWords(letterSets, filename="filtered_words.txt"):
+    """Find possible words from the letter sets."""
+    try:
+        with open(filename) as wordList:
+            letters = set(a for s in letterSets for a in s)
+            words = {a: [] for a in letters}
+            nextPossibilities = createNextPossibleLetterMap(letterSets)
+            
+            for word in wordList:
+                word = word.strip()
+                if len(word) >= 3 and isWordValid(word, letters, nextPossibilities):
+                    words[word[0]].append(word)
+            
+            return words
+    except FileNotFoundError:
+        print(f"Error: File '{filename}' not found.")
+        return {}
 
 def bruteForceAlgorithm(letterSets):
+    """Find the best solutions using a brute-force approach."""
     print("Using a brute force algorithm...")
     wordsByLetter = findPossibleWords(letterSets)
-    allWords = [word for letterSet in [wordsByLetter[letter] for letter in wordsByLetter] for word in letterSet]
-    allLetters = set([letter for letterSet in letterSets for letter in letterSet])
-    
-    bestSolutions = []
-    r = 1
-    while True:
-        for perm in itertools.permutations(allWords, r=r):
-            currSolution = []
-            remainingLetters = set(allLetters)
+    allWords = [word for words in wordsByLetter.values() for word in words]
+    allLetters = set(letter for letterSet in letterSets for letter in letterSet)
+
+    bestSolutions, r = [], 1
+    while not bestSolutions and r <= len(allWords):
+        for perm in itertools.permutations(allWords, r):
+            currSolution, remainingLetters = [], set(allLetters)
             for word in perm:
                 if currSolution and currSolution[-1][-1] != word[0]:
                     break
-
                 currSolution.append(word)
-
-                for a in word:
-                    if a in remainingLetters:
-                        remainingLetters.remove(a)
-
+                remainingLetters -= set(word)
                 if not remainingLetters:
                     bestSolutions.append(perm)
                     break
-        if bestSolutions:
-            break
         r += 1
 
     return bestSolutions
 
 def displaySolutions(solutions):
+    """Display the found solutions."""
     print(f"=== {len(solutions)} Solution{'' if len(solutions) == 1 else 's'} Found! ===")
     for x, seq in enumerate(solutions):
-        print(f"{x+1}: ", end="")
-        for i in range(len(seq)):
-            print(f"{seq[i]}, ", end="") if i != len(seq)-1 else print(seq[i])
-
+        print(f"{x+1}: " + ", ".join(seq))
 
 if __name__ == "__main__":
     letterString = input("Enter all the letter sets as one long string: ")
-    letterSets = [letterString[i:i+3] for i in range(0, len(letterString), 3)]
-    result = bruteForceAlgorithm(letterSets)
-    if result != -1:    
+    try:
+        letterSets = [letterString[i:i+3] for i in range(0, len(letterString), 3)]
+        result = bruteForceAlgorithm(letterSets)
         displaySolutions(result)
-    else:
-        print("No solution found")
-
-
-# Enter all the letter sets as one long string: rudnmgfioapl
-# Using a brute force algorithm...
-# === 1 Solution Found! ===
-# 1: program, mindful
-
+    except ValueError:
+        print("Invalid input. Please enter a string of letters.")
